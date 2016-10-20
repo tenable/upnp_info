@@ -1,6 +1,6 @@
 # upnp_info.py
 ## Purpose
-This script was written so that anyone can easily find the UPnP servers on their network. While tools like this have and do exists, none are as simple as downloading a file and executing it via Python.
+This script was written so that anyone can easily find the UPnP servers on their network. While tools like this have and do exist, none are as simple as downloading a file and executing it via Python.
 
 ## Dependencies
 This script depends on 'requests'. You can install requests via pip:
