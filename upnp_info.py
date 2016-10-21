@@ -49,7 +49,7 @@ def discover_pnp_locations():
 def print_attribute(xml, xml_name, print_name):
     try:
         temp = xml.find(xml_name).text
-        print '\t-> %s: %s' % (print_name, temp)
+        print('\t-> %s: %s' % (print_name, temp))
     except AttributeError:
         return
 
@@ -64,21 +64,21 @@ def print_attribute(xml, xml_name, print_name):
 def parse_locations(locations):
     if len(locations) > 0:
         for location in locations:
-            print '[+] Loading %s...' % location
+            print('[+] Loading %s...' % location)
             try:
                 resp = requests.get(location, timeout=2)
                 if resp.headers.get('server'):
-                    print '\t-> Server String: %s' % resp.headers.get('server')
+                    print('\t-> Server String: %s' % resp.headers.get('server'))
                 else:
-                    print '\t-> No server string'
+                    print('\t-> No server string')
 
                 parsed = urlparse(location)
 
-                print '\t==== XML Attributes ==='
+                print('\t==== XML Attributes ===')
                 try:
                     xmlRoot = ET.fromstring(resp.text)
                 except:
-                    print '\t[!] Failed XML parsing of %s' % location
+                    print('\t[!] Failed XML parsing of %s' % location)
                     continue;
 
                 print_attribute(xmlRoot, "./{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}deviceType", "Device Type")
@@ -96,31 +96,31 @@ def parse_locations(locations):
                 wps_ctr = ''
                 wps_service = ''
 
-                print '\t-> Services:'
+                print('\t-> Services:')
                 services = xmlRoot.findall(".//*{urn:schemas-upnp-org:device-1-0}serviceList/")
                 for service in services:
-                    print '\t\t=> Service Type: %s' % service.find('./{urn:schemas-upnp-org:device-1-0}serviceType').text 
-                    print '\t\t=> Control: %s' % service.find('./{urn:schemas-upnp-org:device-1-0}controlURL').text
-                    print '\t\t=> Events: %s' % service.find('./{urn:schemas-upnp-org:device-1-0}eventSubURL').text
+                    print('\t\t=> Service Type: %s' % service.find('./{urn:schemas-upnp-org:device-1-0}serviceType').text)
+                    print('\t\t=> Control: %s' % service.find('./{urn:schemas-upnp-org:device-1-0}controlURL').text)
+                    print('\t\t=> Events: %s' % service.find('./{urn:schemas-upnp-org:device-1-0}eventSubURL').text)
 
                     # Add a lead in '/' if it doesn't exist
                     scp = service.find('./{urn:schemas-upnp-org:device-1-0}SCPDURL').text
                     if scp[0] != '/':
                         scp = '/' + scp
                     serviceURL = parsed.scheme + "://" + parsed.netloc + scp
-                    print '\t\t=> API: %s' % serviceURL
+                    print('\t\t=> API: %s' % serviceURL)
 
                     # read in the SCP XML
                     resp = requests.get(serviceURL, timeout=2)
                     try:
                         serviceXML = ET.fromstring(resp.text)
                     except:
-                        print '\t\t\t[!] Failed to parse the response XML'
+                        print('\t\t\t[!] Failed to parse the response XML')
                         continue;
 
                     actions = serviceXML.findall(".//*{urn:schemas-upnp-org:service-1-0}action")
                     for action in actions:
-                        print '\t\t\t- ' + action.find('./{urn:schemas-upnp-org:service-1-0}name').text
+                        print('\t\t\t- ' + action.find('./{urn:schemas-upnp-org:service-1-0}name').text)
                         if action.find('./{urn:schemas-upnp-org:service-1-0}name').text == 'AddPortMapping':
                             igd_ctr = parsed.scheme + "://" + parsed.netloc + service.find('./{urn:schemas-upnp-org:device-1-0}controlURL').text
                             igd_service = service.find('./{urn:schemas-upnp-org:device-1-0}serviceType').text
@@ -132,21 +132,21 @@ def parse_locations(locations):
                             wps_service = service.find('./{urn:schemas-upnp-org:device-1-0}serviceType').text
 
                 if igd_ctr and igd_service:
-                    print '\t[+] IGD port mapping available. Looking up current mappings...'
+                    print('\t[+] IGD port mapping available. Looking up current mappings...')
                     find_port_mappings(igd_ctr, igd_service)
 
                 if cd_ctr and cd_service:
-                    print '\t[+] Content browsing available. Looking up base directories...'
+                    print('\t[+] Content browsing available. Looking up base directories...')
                     find_directories(cd_ctr, cd_service)     
 
                 if wps_ctr and wps_service:
-                    print '\t[+] M1 available. Looking up device information...'
+                    print('\t[+] M1 available. Looking up device information...')
                     find_device_info(wps_ctr, wps_service) 
 
             except requests.exceptions.ConnectionError:
-                print '[!] Could not load %s' % location
+                print ('[!] Could not load %s' % location)
             except requests.exceptions.ReadTimeout:
-                print '[!] Timeout reading from %s' % location
+                print ('[!] Timeout reading from %s' % location)
 
     return
 
@@ -180,17 +180,17 @@ def find_port_mappings(p_url, p_service):
             try:
                 xmlRoot = ET.fromstring(resp.text)
             except:
-                print '\t\t[!] Failed to parse the response XML'
+                print('\t\t[!] Failed to parse the response XML')
                 return
 
             externalIP = xmlRoot.find(".//*NewRemoteHost").text
             if externalIP == None:
                 externalIP = '*'
 
-            print '\t\t[%s] %s:%s => %s:%s | Desc: %s' % (xmlRoot.find(".//*NewProtocol").text,
+            print('\t\t[%s] %s:%s => %s:%s | Desc: %s' % (xmlRoot.find(".//*NewProtocol").text,
                 externalIP, xmlRoot.find(".//*NewExternalPort").text,
                 xmlRoot.find(".//*NewInternalClient").text, xmlRoot.find(".//*NewInternalPort").text,
-                xmlRoot.find(".//*NewPortMappingDescription").text)
+                xmlRoot.find(".//*NewPortMappingDescription").text))
 
         index += 1
 
@@ -221,7 +221,7 @@ def find_directories(p_url, p_service):
 
     resp = requests.post(p_url, data=payload, headers=soapActionHeader)
     if resp.status_code != 200:
-        print '\t\tRequest failed with status: %d' % resp.status_code
+        print('\t\tRequest failed with status: %d' % resp.status_code)
         return
 
     try:
@@ -234,9 +234,9 @@ def find_directories(p_url, p_service):
         containers = xmlRoot.findall("./{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}container")
         for container in containers:
             if container.find("./{urn:schemas-upnp-org:metadata-1-0/upnp/}class").text.find("object.container") > -1:
-                print "\t\tStorage Folder: " + container.find("./{http://purl.org/dc/elements/1.1/}title").text
+                print("\t\tStorage Folder: " + container.find("./{http://purl.org/dc/elements/1.1/}title").text)
     except:
-        print '\t\t[!] Failed to parse the response XML'
+        print('\t\t[!] Failed to parse the response XML')
 
 
 ###
@@ -260,13 +260,13 @@ def find_device_info(p_url, p_service):
 
     resp = requests.post(p_url, data=payload, headers=soapActionHeader)
     if resp.status_code != 200:
-        print '\t[-] Request failed with status: %d' % resp.status_code
+        print('\t[-] Request failed with status: %d' % resp.status_code)
         return
 
     info_regex = re.compile("<NewDeviceInfo>(.+)</NewDeviceInfo>", re.IGNORECASE)
     encoded_info = info_regex.search(resp.text)
     if not encoded_info:
-        print '\t[-] Failed to find the device info'
+        print('\t[-] Failed to find the device info')
         return
 
     info = base64.b64decode(encoded_info.group(1))
@@ -277,22 +277,22 @@ def find_device_info(p_url, p_service):
             info = info[4+length:]
 
             if type == 0x1023:
-                print '\t\tModel Name: %s' % value
+                print('\t\tModel Name: %s' % value)
             elif type == 0x1021:
-                print '\t\tManufacturer: %s' % value
+                print('\t\tManufacturer: %s' % value)
             elif type == 0x1011:
-                print '\t\tDevice Name: %s' % value
+                print('\t\tDevice Name: %s' % value)
             elif type == 0x1020:
                 pretty_mac = ':'.join('%02x' % ord(v) for v in value)
-                print '\t\tMAC Address: %s' % pretty_mac
+                print('\t\tMAC Address: %s' % pretty_mac)
             elif type == 0x1032:
                 encoded_pk = base64.b64encode(value)
-                print '\t\tPublic Key: %s' % encoded_pk
+                print('\t\tPublic Key: %s' % encoded_pk)
             elif type == 0x101a:
                 encoded_nonce = base64.b64encode(value)
-                print '\t\tNonce: %s' % encoded_nonce
+                print('\t\tNonce: %s' % encoded_nonce)
         except: 
-            print "Failed TLV parsing"
+            print("Failed TLV parsing")
             break
 
 ###
@@ -301,16 +301,16 @@ def find_device_info(p_url, p_service):
 # exists
 ###
 def main(argv):
-    print '[+] Discovering UPnP locations'
+    print('[+] Discovering UPnP locations')
     locations = discover_pnp_locations()
-    print '[+] Discovery complete'
-    print '[+] %d locations found:' % len(locations)
+    print('[+] Discovery complete')
+    print('[+] %d locations found:' % len(locations))
     for location in locations:
-        print '\t-> %s' % location
+        print('\t-> %s' % location)
 
     parse_locations(locations)
 
-    print "[+] Fin."
+    print("[+] Fin.")
 
 if __name__ == "__main__":
     main(sys.argv)
