@@ -5,8 +5,13 @@ import base64
 import struct
 import socket
 import requests
-from urlparse import urlparse
 import xml.etree.ElementTree as ET
+
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
+
 
 ###
 # Send a multicast message tell all the pnp services that we are looking
