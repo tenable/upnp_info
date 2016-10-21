@@ -145,6 +145,8 @@ def parse_locations(locations):
 
             except requests.exceptions.ConnectionError:
                 print '[!] Could not load %s' % location
+            except requests.exceptions.ReadTimeout:
+                print '[!] Timeout reading from %s' % location
 
     return
 
