@@ -32,12 +32,12 @@ def discover_pnp_locations():
                     '\r\n')
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.sendto(ssdpDiscover, ("239.255.255.250", 1900))
+    sock.sendto(ssdpDiscover.encode('ASCII'), ("239.255.255.250", 1900))
     sock.settimeout(3)
     try:
         while True:
             data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-            location_result = location_regex.search(data)
+            location_result = location_regex.search(data.decode('ASCII'))
             if location_result and (location_result.group(1) in locations) == False:
                 locations.add(location_result.group(1))
     except socket.error:
