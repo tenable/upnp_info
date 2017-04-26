@@ -22,7 +22,7 @@ except ImportError:
 ###
 def discover_pnp_locations():
     locations = set()
-    location_regex = re.compile("location: (.+)\r\n", re.IGNORECASE)
+    location_regex = re.compile("location:[ ]*(.+)\r\n", re.IGNORECASE)
     ssdpDiscover = ('M-SEARCH * HTTP/1.1\r\n' +
                     'HOST: 239.255.255.250:1900\r\n' +
                     'MAN: "ssdp:discover"\r\n' +
