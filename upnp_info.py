@@ -287,7 +287,7 @@ def find_device_info(p_url, p_service):
             elif type == 0x1011:
                 print('\t\tDevice Name: %s' % value)
             elif type == 0x1020:
-                pretty_mac = ':'.join('%02x' % ord(v) for v in value)
+                pretty_mac = ":".join(map("{:02X}".format, struct.unpack("BBBBBB", value)))
                 print('\t\tMAC Address: %s' % pretty_mac)
             elif type == 0x1032:
                 encoded_pk = base64.b64encode(value)
