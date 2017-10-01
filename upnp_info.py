@@ -92,6 +92,7 @@ def parse_locations(locations):
                 print_attribute(xmlRoot, "./{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}modelDescription", "Model Description")
                 print_attribute(xmlRoot, "./{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}modelName", "Model Name")
                 print_attribute(xmlRoot, "./{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}modelNumber", "Model Number")
+                print_attribute(xmlRoot, "./{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}serialNumber", "Serial Number")
 
                 igd_ctr = ''
                 igd_service = ''
@@ -115,24 +116,43 @@ def parse_locations(locations):
                     print('\t\t=> API: %s' % serviceURL)
 
                     # read in the SCP XML
-                    resp = requests.get(serviceURL, timeout=2)
+                    try:
+                        resp = requests.get(serviceURL, timeout=2)
+                    except requests.exceptions.ConnectionError:
+                        print('[!] Could not load %s' % serviceURL)
+                        continue
+                    except requests.exceptions.ReadTimeout:
+                        print('[!] Timeout reading from %s' % serviceURL)
+                        continue
+
                     try:
                         serviceXML = ET.fromstring(resp.text)
                     except:
                         print('\t\t\t[!] Failed to parse the response XML')
                         continue;
-
                     actions = serviceXML.findall(".//*{urn:schemas-upnp-org:service-1-0}action")
                     for action in actions:
                         print('\t\t\t- ' + action.find('./{urn:schemas-upnp-org:service-1-0}name').text)
                         if action.find('./{urn:schemas-upnp-org:service-1-0}name').text == 'AddPortMapping':
-                            igd_ctr = parsed.scheme + "://" + parsed.netloc + service.find('./{urn:schemas-upnp-org:device-1-0}controlURL').text
+                            # Add a lead in '/' if it doesn't exist
+                            scp = service.find('./{urn:schemas-upnp-org:device-1-0}controlURL').text
+                            if scp[0] != '/':
+                                scp = '/' + scp
+                            igd_ctr = parsed.scheme + "://" + parsed.netloc + scp
                             igd_service = service.find('./{urn:schemas-upnp-org:device-1-0}serviceType').text
                         elif action.find('./{urn:schemas-upnp-org:service-1-0}name').text == 'Browse':
-                            cd_ctr = parsed.scheme + "://" + parsed.netloc + service.find('./{urn:schemas-upnp-org:device-1-0}controlURL').text
+                            # Add a lead in '/' if it doesn't exist
+                            scp = service.find('./{urn:schemas-upnp-org:device-1-0}controlURL').text
+                            if scp[0] != '/':
+                                scp = '/' + scp
+                            cd_ctr = parsed.scheme + "://" + parsed.netloc + scp
                             cd_service = service.find('./{urn:schemas-upnp-org:device-1-0}serviceType').text
                         elif action.find('./{urn:schemas-upnp-org:service-1-0}name').text == 'GetDeviceInfo':
-                            wps_ctr = parsed.scheme + "://" + parsed.netloc + service.find('./{urn:schemas-upnp-org:device-1-0}controlURL').text
+                            # Add a lead in '/' if it doesn't exist
+                            scp = service.find('./{urn:schemas-upnp-org:device-1-0}controlURL').text
+                            if scp[0] != '/':
+                                scp = '/' + scp
+                            wps_ctr = parsed.scheme + "://" + parsed.netloc + scp
                             wps_service = service.find('./{urn:schemas-upnp-org:device-1-0}serviceType').text
 
                 if igd_ctr and igd_service:
@@ -267,7 +287,7 @@ def find_device_info(p_url, p_service):
         print('\t[-] Request failed with status: %d' % resp.status_code)
         return
 
-    info_regex = re.compile("<NewDeviceInfo>(.+)</NewDeviceInfo>", re.IGNORECASE)
+    info_regex = re.compile("<NewDeviceInfo>(.+)</NewDeviceInfo>", re.IGNORECASE|re.DOTALL)
     encoded_info = info_regex.search(resp.text)
     if not encoded_info:
         print('\t[-] Failed to find the device info')
@@ -282,6 +302,8 @@ def find_device_info(p_url, p_service):
 
             if type == 0x1023:
                 print('\t\tModel Name: %s' % value)
+            elif type == 0x1024:
+                print('\t\tModel Number: %s' % value)
             elif type == 0x1021:
                 print('\t\tManufacturer: %s' % value)
             elif type == 0x1011:
@@ -295,6 +317,8 @@ def find_device_info(p_url, p_service):
             elif type == 0x101a:
                 encoded_nonce = base64.b64encode(value)
                 print('\t\tNonce: %s' % encoded_nonce)
+            elif type == 0x1042:
+                print('\t\tSerial Number: %s' % value)
         except: 
             print("Failed TLV parsing")
             break
