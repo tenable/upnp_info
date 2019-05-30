@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import re
 import sys
 import time
@@ -20,7 +21,7 @@ except ImportError:
 #
 # @return the set of advertised upnp locations
 ###
-def discover_pnp_locations():
+def discover_pnp_locations(listening_timeout):
     locations = set()
     location_regex = re.compile("location:[ ]*(.+)\r\n", re.IGNORECASE)
     ssdpDiscover = ('M-SEARCH * HTTP/1.1\r\n' +
@@ -32,7 +33,7 @@ def discover_pnp_locations():
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.sendto(ssdpDiscover.encode('ASCII'), ("239.255.255.250", 1900))
-    sock.settimeout(3)
+    sock.settimeout(listening_timeout)
     try:
         while True:
             data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
@@ -304,9 +305,9 @@ def find_device_info(p_url, p_service):
 # investigate them further. Also prints out port mapping information if it
 # exists
 ###
-def main(argv):
+def main(listening_timeout):
     print('[+] Discovering UPnP locations')
-    locations = discover_pnp_locations()
+    locations = discover_pnp_locations(listening_timeout)
     print('[+] Discovery complete')
     print('[+] %d locations found:' % len(locations))
     for location in locations:
@@ -317,5 +318,18 @@ def main(argv):
     print("[+] Fin.")
 
 if __name__ == "__main__":
-    main(sys.argv)
+    PARSER = ArgumentParser()
 
+    PARSER.add_argument('--listening-timeout', action='store',
+                        help='Keep listening for responses until we hit the listening timeout.',
+                        default=3)
+
+    ARGS = PARSER.parse_args()
+
+    try:
+        int(ARGS.listening_timeout)
+    except ValueError:
+        PARSER.print_usage()
+        exit(1)
+
+    main(int(ARGS.listening_timeout))
